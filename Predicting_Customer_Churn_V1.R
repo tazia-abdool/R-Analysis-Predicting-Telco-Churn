@@ -3,7 +3,7 @@
 #Libraries
 library(ggplot2)
 library(caret)
-library (forecast)
+library(forecast)
 library(rpart)
 library(rpart.plot)
 library(pROC)
@@ -206,11 +206,11 @@ confusionMatrix(tree.point.pred, factor(valid.df$Churn))
 logit.reg <- glm(Churn ~., data = train.df, family= "binomial")
 summary(logit.reg)
 
-#Confusion Matrix for Logistic Regression
+# Confusion Matrix for Logistic Regression
 
 logit.reg.pred <- predict(logit.reg, valid.df,  type = "response")
 
-  # Choose cutoff value and evaluate classification performance
+# Choose cutoff value and evaluate classification performance
 pred <- factor(ifelse(logit.reg.pred > 0.5, 'Yes', 'No'))
 
 confusionMatrix(factor(pred), factor(valid.df$Churn), positive = "Yes")
@@ -232,6 +232,17 @@ confusionMatrix(factor(pred2), factor(valid.df$Churn), positive = "Yes")
 
 #RANDOM FOREST MODEL
 
+#Initial Model
+rfModel <- randomForest(Churn ~., data = training)
+rfModel
+       
+#Random Forest Prediction and Confusion Matrix
+pred_rf <- predict(rfModel, testing)
+#caret::confusionMatrix(pred_rf, testing$Churn)
+table(Predicted = pred_rf, Actual = testing$Churn)
+#To calculate the error rate
+plot(rfModel)
+ 
 #Set control parameters for random forest model selection
 ctrl <- trainControl(method = "cv", number=5, 
                      classProbs = TRUE, summaryFunction = twoClassSummary)
