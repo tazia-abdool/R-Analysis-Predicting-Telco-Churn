@@ -1,4 +1,4 @@
-# Predicting Customer Churn V1
+# Predicting Customer Churn
 
 #Libraries
 library(ggplot2)
