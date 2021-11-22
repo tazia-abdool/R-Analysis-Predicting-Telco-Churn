@@ -1,4 +1,4 @@
-# Predicting Customer Churn
+# Predicting Customer Churn V1
 
 #Libraries
 library(ggplot2)
@@ -61,12 +61,6 @@ str(mydata.df) # checking to see if all the anomalies are fixed i.e expecting to
 
 #customer ID column is not needed
 mydata.df$customerID <- NULL 
-
-#Split into training & validation data
-set.seed(56)
-split_train_test <- createDataPartition(mydata.df$Churn,p=0.7,list=FALSE)
-dtrain<- mydata.df[split_train_test,]
-dtest<- mydata.df[-split_train_test,]
 
 
 #Exploratory Data Analysis
@@ -180,51 +174,63 @@ grid.arrange(plot17, plot18, plot19, ncol=1)
 plot20 <- ggplot(data=mydata.df)+geom_bar(aes(x=Churn),stat="count", width=0.7, fill="steelblue")+ 
   labs(x= "Churn", y="Count", title = "Churn Distribution")+ theme_light()+theme(plot.title = element_text(hjust = 0.5))
 
-
-#Decision Tree Statistical Analysis
-
-tr_fit <- rpart(Churn ~., data = dtrain, method="class")
-rpart.plot(tr_fit)
-
-
-#Confusion Matrix
-tr_prob1 <- predict(tr_fit, dtest)
-tr_pred1 <- ifelse(tr_prob1[,2] > 0.5,"Yes","No")
-table(Predicted = tr_pred1, Actual = dtest$Churn)
-
-#Calculate Accuracy
-
-tr_prob2 <- predict(tr_fit, dtrain)
-tr_pred2 <- ifelse(tr_prob2[,2] > 0.5,"Yes","No")
-tr_tab1 <- table(Predicted = tr_pred2, Actual = dtrain$Churn)
-tr_tab2 <- table(Predicted = tr_pred1, Actual = dtest$Churn)
-tr_acc <- sum(diag(tr_tab2))/sum(tr_tab2)
-tr_acc
+plot20
 
 
 
 
-# Logistic Regression Analysis
+#MODELING
 
-lr_fit <- glm(as.factor(Churn) ~., data = dtrain,
-              family= binomial(link='logit'))
+#Split into training & validation data
+set.seed(500)
+train.index <- sample(1:nrow(mydata.df), nrow(mydata.df)*0.8) 
 
-summary(lr_fit)
+# Build training and validation set by indexing
+train.df <- mydata.df[train.index, ]
+valid.df <- mydata.df[-train.index, ]
+
+#DECISION TREE
+
+tree_fit <- rpart(Churn ~., data = train.df, method="class")
+rpart.plot(tree_fit, extra = 1)
+
+#Confusion Matrix for Decision Tree
+
+tree.point.pred <- predict(tree_fit, valid.df, type = "class")
+confusionMatrix(tree.point.pred, factor(valid.df$Churn))
+
+
+
+# LOGISTIC REGRESSION
+
+logit.reg <- glm(Churn ~., data = train.df, family= "binomial")
+summary(logit.reg)
 
 #Confusion Matrix for Logistic Regression
 
-lr_prob1 <- predict(lr_fit, dtest, type="response")
-lr_pred1 <- ifelse(lr_prob1 > 0.5,"Yes","No")
-table(Predicted = lr_pred1, Actual = dtest$Churn)
+logit.reg.pred <- predict(logit.reg, valid.df,  type = "response")
 
-#Calculate Accuracy for Logistic Regression
+  # Choose cutoff value and evaluate classification performance
+pred <- factor(ifelse(logit.reg.pred > 0.5, 'Yes', 'No'))
 
-lr_prob2 <- predict(lr_fit, dtrain, type="response")
-lr_pred2 <- ifelse(lr_prob2 > 0.5,"Yes","No")
-lr_tab1 <- table(Predicted = lr_pred2, Actual = dtrain$Churn)
-lr_tab2 <- table(Predicted = lr_pred1, Actual = dtest$Churn)
-lr_acc <- sum(diag(lr_tab2))/sum(lr_tab2)
-lr_acc
+confusionMatrix(factor(pred), factor(valid.df$Churn), positive = "Yes")
+
+# Find best Cutoff
+
+r_logit_reg <- roc(valid.df$Churn, logit.reg.pred)
+
+plot.roc(r_logit_reg)
+
+# find the best threshold, with a default best method "youden"
+coords(r, x = "best")
+
+pred2 <- factor(ifelse(logit.reg.pred > 0.24, 'Yes', 'No'))
+
+confusionMatrix(factor(pred2), factor(valid.df$Churn), positive = "Yes")
+
+
+
+#RANDOM FOREST MODEL
 
 #Set control parameters for random forest model selection
 ctrl <- trainControl(method = "cv", number=5, 
