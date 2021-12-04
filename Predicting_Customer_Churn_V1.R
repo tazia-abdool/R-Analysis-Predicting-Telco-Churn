@@ -65,7 +65,7 @@ mydata.df$customerID <- NULL
 # To categorize the Tenure column based on the range groups available.   
 
 # Minimum tenure is 1 month and maximum tenure is 72 months:       
-min(churn$tenure); max(churn$tenure)
+min(mydata.df$tenure); max(mydata.df$tenure)
 
 # we can group them into five tenure groups: “0–12 Month”, “12–24 Months”, “24–48 Months”, “48–60 Months”, “> 60 Months”
 group_tenure <- function(tenure){
