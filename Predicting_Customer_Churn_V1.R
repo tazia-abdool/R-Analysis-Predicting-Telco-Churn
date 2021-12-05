@@ -272,7 +272,7 @@ ctrl <- trainControl(method = "cv", number=5,
                      classProbs = TRUE, summaryFunction = twoClassSummary)
 
 #Exploratory random forest model selection
-rf_fit1 <- train(Churn ~., data = dtrain,
+rf_fit1 <- train(Churn ~., data = train.df,
                  method = "rf",
                  ntree = 75,
                  tuneLength = 5,
@@ -282,7 +282,7 @@ rf_fit1
 
 
 #Run optimal model
-rf_fit2 <- randomForest(as.factor(Churn) ~., data = dtrain, 
+rf_fit2 <- randomForest(as.factor(Churn) ~., data = train.df, 
                         ntree = 75, mtry = 2, 
                         importance = TRUE, proximity = TRUE)
 
